@@ -1,0 +1,5 @@
+'''
+Config Constants
+'''
+
+CITY = 'Bremen'
