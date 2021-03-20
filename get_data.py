@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 import requests
 from io import StringIO
-import os 
+import glob
+import os
+from halo import Halo
 
 start_year = 2010
-
 
 stations = [
     ('Bremerhaven', 'DEHB005', (471474, 5934928)),
@@ -18,31 +19,48 @@ stations = [
     ('Bremerhaven', 'DEHB011', (473432, 5937454))
 ]
 
-for station in stations:
-    frames = []
-    for year_increment in range(10):
-        payload = {
-            'group': 'pollution',
-            'period': '1h',
-            'timespan': 'custom',
-            'start[date]': '01.01.{}'.format(start_year + year_increment),
-            'start[hour]': '00',
-            'end[date]': '31.12.{}'.format(start_year + year_increment),
-            'end[hour]': '24'
-        }
 
+@Halo(text='Getting Data From Server ..', spinner='dots')
+def get_data_from_stations(stations):
+    data_full = pd.DataFrame()
+    for station in stations:
+        frames = []
         station_code = station[1]
-        url = 'https://luftmessnetz.bremen.de/station/{}.csv'.format(station_code)
-        r = requests.get(url, params=payload)
+        print("\n [INFO] Getting station: {}".format(station_code))
+        for year_increment in range(2):
+            payload = {
+                'group': 'pollution',
+                'period': '1h',
+                'timespan': 'custom',
+                'start[date]': '01.01.{}'.format(start_year + year_increment),
+                'start[hour]': '00',
+                'end[date]': '31.12.{}'.format(start_year + year_increment),
+                'end[hour]': '24'
+            }
 
+            url = 'https://luftmessnetz.bremen.de/station/{}.csv'.format(station_code)
+            r = requests.get(url, params=payload)
 
-        df =  pd.read_csv(StringIO(r.text), sep=';', skiprows=4, header=None,names=["Date","PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"])
-        print(df.head())
-        frames.append(df)
-
-    complete_frame = pd.concat(frames)
+            cache_res = r.text
+            f_l = cache_res.splitlines()[0]
+            if f_l.count(';') > 7: #We recieved PM2.5
+                df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+            else:
+                df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+            df['Date'] = pd.to_datetime(df['Date']).apply(lambda x:x.strftime('%d%m%y%H%M'))
+            frames.append(df)
+        complete_frame = pd.concat(frames)
+        data_full = data_full.append(complete_frame)
 
     if not os.path.exists("data"):
         os.mkdir("data")
-    out = './data/{}.csv'.format(station_code)
-    complete_frame.to_csv(out)
+    out = './data/full_data.csv'
+    print("\n [INFO] Writing the csv to the disk @ {}".format(out))
+    
+    print(data_full.shape)
+    print(data_full.head())
+    data_full.to_csv(out, index=False)
+
+
+
+get_data_from_stations(stations)

@@ -1,61 +1,72 @@
-'''
-IMPORTS
-'''
-import overpy
-import matplotlib.pyplot as plt
-import lib.config as cfg
+import requests
+from lib import config
+import json
+import time
+import os
+def request_and_write_to_json(url, strr, param=None):
+  r = requests.get(url, param)
+  if r.status_code == 200:
+    res_json = r.json()
+    print("[ INFO ] Exporting {} to json ..".format(strr))
+    json_object = json.dumps(res_json, indent = 4) 
+    
+    try:
+      os.mkdir(config.JSON_OUT_DIR)
+    except:
+      pass
 
-city = cfg.CITY
-
-api = overpy.Overpass()
-
-OVERPASS_QRY = """
-area["name"="Bremen"]->.a;
-(
-  node["power"="plant"](area.a);
-  way["power"="plant"](area.a);
-  relation["power"="plant"](area.a);
-);(._;>;);
-out center;  
-"""
-
-PWR_PLTS = api.query(OVERPASS_QRY) 
-
-
-print("Nodes : {}, Ways : {}, Relations : {}".format(
-  len(PWR_PLTS.nodes), len(PWR_PLTS.ways), len(PWR_PLTS.relations)))
+    with open("{}{}.json".format(config.JSON_OUT_DIR,strr), "w") as outfile: 
+      outfile.write(json_object) 
+  else:
+    print("[ ERROR ] GET request failed with status code {}".format(r.status_code))
 
 
-coords  = []
-'''
-Append Coordinates (lon, lat) to a list
-'''
-coords += [(float(node.lon), float(node.lat)) 
-           for node in PWR_PLTS.nodes]
-coords += [(float(way.center_lon), float(way.center_lat)) 
-           for way in PWR_PLTS.ways]
-coords += [(float(rel.center_lon), float(rel.center_lat)) 
-           for rel in PWR_PLTS.relations]
+def get_components():
+  request_and_write_to_json(config.BASE_URL+config.COMPONENTS_URL, "components")
+
+
+def get_networks():
+  request_and_write_to_json(config.BASE_URL+config.NETWORKS_URL, "networks")
+
+
+def get_scopes():
+  request_and_write_to_json(config.BASE_URL+config.SCOPES_URL, "scopes")
+
+
+def get_all_measurements(si, df, dt, tf, tt, ci, sc):
+  '''
+  Function that outputs the measurments of a specified component id within a specific date range
+  as a json on disk
+
+  Args:
+  si : station id -> integer
+  df : data from -> string <YYYY-MM-DD> 
+  dt : data to -> string <YYYY-MM-DD> 
+  tf: time from -> integer [ 1 .. 24 ] 
+  tt: time to -> integer [ 1 .. 24 ] 
+  ci: component id -> integer
+  sc: scope -> integer
+  '''
+
+  params = {
+    "date_from":df,
+    "date_to":dt,
+    "time_from":tf,
+    "time_to":tt,
+    "station":si,
+    "component":ci,
+    # "scope":sc
+  }
+
+  request_and_write_to_json(config.BASE_URL+config.MEASUREMENT_URL, "measurements_station_{}_cmp_id_{}".format(si, ci), params)
 
 
 
-# coords = []
-# for element in data['elements']:
-#   if element['type'] == 'node':
-#     lon = element['lon']
-#     lat = element['lat']
-#     coords.append((lon, lat))
-#   elif 'center' in element:
-#     lon = element['center']['lon']
-#     lat = element['center']['lat']
-#     coords.append((lon, lat))# Convert coordinates into numpy array
-# X = np.array(coords)plt.plot(X[:, 0], X[:, 1], 'o')
-# plt.title('Power Plants in Bremen')
-# plt.xlabel('Longitude')
-# plt.ylabel('Latitude')
-# plt.axis('equal')
-# plt.show()
+get_components()
+get_scopes()
 
+Bremen_Station_IDs=["DEHB005","DEHB004","DEHB012",13, 6, 11,"012","013"]
 
-# print(PWR_PLTS.nodes)
-
+for i in Bremen_Station_IDs:
+  get_all_measurements(i,"2015-01-01","2016-12-30",1,5,1,2)
+  time.sleep(0.5)
