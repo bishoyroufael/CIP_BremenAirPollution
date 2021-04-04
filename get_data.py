@@ -27,7 +27,7 @@ def get_data_from_stations(stations):
         frames = []
         station_code = station[1]
         print("\n [INFO] Getting station: {}".format(station_code))
-        for year_increment in range(2):
+        for year_increment in range(9):
             payload = {
                 'group': 'pollution',
                 'period': '1h',
@@ -43,20 +43,22 @@ def get_data_from_stations(stations):
 
             cache_res = r.text
             f_l = cache_res.splitlines()[0]
-            if f_l.count(';') > 7: #We recieved PM2.5
+            if f_l.count(';') > 7:#We recieved PM2.5
                 df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
             else:
                 df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
-            df['Date'] = pd.to_datetime(df['Date']).apply(lambda x:x.strftime('%d%m%y%H%M'))
+            df['Date'] = pd.to_datetime(df['Date']).apply(lambda x : x.strftime('%s'))
             frames.append(df)
         complete_frame = pd.concat(frames)
+        station_code_column = np.full((len(complete_frame)), station_code)
+        complete_frame['station_code'] = station_code_column
         data_full = data_full.append(complete_frame)
 
     if not os.path.exists("data"):
         os.mkdir("data")
     out = './data/full_data.csv'
     print("\n [INFO] Writing the csv to the disk @ {}".format(out))
-    
+
     print(data_full.shape)
     print(data_full.head())
     data_full.to_csv(out, index=False)
