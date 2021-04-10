@@ -18,6 +18,6 @@ stations = [
     ('Bremen-Mitte', 'DEHB001', (487658, 5880868)),
     ('Bremen-Ost', 'DEHB002', (494430, 5878954)),
     ('Dobben', 'DEHB006', (488284, 5881036)),
-    ('Nordstrase', '-', (485000, 5883368)),
-    ('Bremerhaven', 'DEHB011', (473432, 5937454))    
+   #('Nordstrase', '-', (485000, 5883368)),
+   ('Bremerhaven', 'DEHB011', (473432, 5937454))   # Stations doesn't have o3 measurments 
 ]
