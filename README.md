@@ -10,7 +10,9 @@ cd into the repo and create the anaconda environment using: `conda env create -f
 
 activate the environment using: `conda activate cip`
 
-run the training script: `python train.py`
+run the training script: `python train.py`. 
+
+*Note: Make sure that the gpu drivers are installed and cuda is installed to be able to train on the gpu, otherwise the training will be done on the cpu.*
 
 The model and the weights will be saved after the training finishes.
 
