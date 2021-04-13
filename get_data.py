@@ -5,6 +5,7 @@ from io import StringIO
 import glob
 import os
 from halo import Halo
+from datetime import datetime
 
 start_year = 2010
 
@@ -43,11 +44,13 @@ def get_data_from_stations(stations):
 
             cache_res = r.text
             f_l = cache_res.splitlines()[0]
-            if f_l.count(';') > 7:#We recieved PM2.5
-                df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+            if f_l.count(';') > 7:  # We recieved PM2.5
+                df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
+                                 "Date", "PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
             else:
-                df =  pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date","PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
-            df['Date'] = pd.to_datetime(df['Date']).apply(lambda x : x.strftime('%s'))
+                df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
+                                 "Date", "PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+            df['Date'] = (df['Date']).apply(lambda x: datetime.strptime(x, '%d.%m.%Y %H:%M').strftime('%s'))
             frames.append(df)
         complete_frame = pd.concat(frames)
         station_code_column = np.full((len(complete_frame)), station_code)
@@ -62,7 +65,6 @@ def get_data_from_stations(stations):
     print(data_full.shape)
     print(data_full.head())
     data_full.to_csv(out, index=False)
-
 
 
 get_data_from_stations(stations)
