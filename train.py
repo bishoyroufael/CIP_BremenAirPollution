@@ -55,8 +55,8 @@ x_train = np.reshape(x_train, (x_train.shape[0]*x_train.shape[1], x_train.shape[
 y_train = np.reshape(y_train, (y_train.shape[0]*y_train.shape[1], y_train.shape[2]))
 
 # Save npy on disk
-np.save('./data/x_train.npy')
-np.save('./data/y_train.npy')
+np.save('./data/x_train.npy', x_train)
+np.save('./data/y_train.npy', y_train)
 
 s_x = MinMaxScaler()
 s_y = MinMaxScaler()
