@@ -75,8 +75,7 @@ model = NN()
 model.build_network(x_train.shape[1:])
 model.compile()
 model.summary()
-model.save()
 model.train(x_train, y_train, e=1)
-
+model.save()
 
 

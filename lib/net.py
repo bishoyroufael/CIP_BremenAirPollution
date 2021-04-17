@@ -14,7 +14,7 @@ class NN():
     '''
     def __init__(self):
         self.model  = Sequential()
-        Path.mkdir('./logs', parents=True, exist_ok=True)
+        Path('./logs').mkdir(parents=True, exist_ok=True)
         self.tb_callback = tensorflow.keras.callbacks.TensorBoard('./logs', update_freq=1)
     def summary(self):
         self.model.summary()
