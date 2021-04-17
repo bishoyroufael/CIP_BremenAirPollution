@@ -9,7 +9,6 @@ NETWORKS_URL = "networks/json"
 MEASUREMENT_URL = "measures/json"
 SCOPES_URL = "scopes/json"
 JSON_OUT_DIR ="./output_json/"
-
 stations = [
     ('Bremerhaven', 'DEHB005', (471474, 5934928)),
     ('Bremen-Nord', 'DEHB004', (474964, 5892465)),

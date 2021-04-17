@@ -22,7 +22,11 @@ stations = [
 
 
 @Halo(text='Getting Data From Server ..', spinner='dots')
-def get_data_from_stations(stations):
+def get_data_from_stations(stations, group='pollution'):
+    '''
+    Group : pollution or meteorology
+    '''
+    assert group=='pollution' or group=='meteorology', "[ ERROR ] group must be either 'pollution' or 'meteorology'"
     data_full = pd.DataFrame()
     for station in stations:
         frames = []
@@ -30,7 +34,7 @@ def get_data_from_stations(stations):
         print("\n [INFO] Getting station: {}".format(station_code))
         for year_increment in range(9):
             payload = {
-                'group': 'pollution',
+                'group': group,
                 'period': '1h',
                 'timespan': 'custom',
                 'start[date]': '01.01.{}'.format(start_year + year_increment),
@@ -43,14 +47,19 @@ def get_data_from_stations(stations):
             r = requests.get(url, params=payload)
 
             cache_res = r.text
-            f_l = cache_res.splitlines()[0]
-            if f_l.count(';') > 7:  # We recieved PM2.5
-                df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
-                                 "Date", "PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+            
+            if group == 'pollution':
+                f_l = cache_res.splitlines()[0]
+                if f_l.count(';') > 7:  # We recieved PM2.5
+                    df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
+                                    "Date", "PM10", "PM2.5", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+                else:
+                    df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
+                                    "Date", "PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
+                df['Date'] = (df['Date']).apply(lambda x: datetime.strptime(x, '%d.%m.%Y %H:%M').strftime('%s'))
             else:
-                df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=[
-                                 "Date", "PM10", "NO2", "NOx", "NO", "O3", "SO2", "CO"], dtype={'Date': str})
-            df['Date'] = (df['Date']).apply(lambda x: datetime.strptime(x, '%d.%m.%Y %H:%M').strftime('%s'))
+                df = pd.read_csv(StringIO(cache_res), sep=';', skiprows=4, header=None, names=["Date", "Wind Direction", "Wind Speed","Temperature", "Humidity"])
+                df['Date'] = (df['Date']).apply(lambda x: datetime.strptime(x, '%d.%m.%Y %H:%M').strftime('%s'))
             frames.append(df)
         complete_frame = pd.concat(frames)
         station_code_column = np.full((len(complete_frame)), station_code)
@@ -59,7 +68,7 @@ def get_data_from_stations(stations):
 
     if not os.path.exists("data"):
         os.mkdir("data")
-    out = './data/full_data.csv'
+    out = './data/full_data_{}.csv'.format(group)
     print("\n [INFO] Writing the csv to the disk @ {}".format(out))
 
     print(data_full.shape)
@@ -67,4 +76,4 @@ def get_data_from_stations(stations):
     data_full.to_csv(out, index=False)
 
 
-get_data_from_stations(stations)
+get_data_from_stations(stations, group='meteorology')
