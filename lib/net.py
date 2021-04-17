@@ -1,11 +1,11 @@
 import os
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-import keras
-from keras.models import Sequential
-from keras.layers import LSTM, Input, GRU, Dropout
-from keras.layers import Dense
-from keras.optimizers import Adam
-
+import tensorflow.keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Input, GRU, Dropout
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from pathlib import Path 
 # Demo : https://colab.research.google.com/drive/1FwjQE8I5rODG2UN5h_O8Y_tT-K3MIfzB?usp=sharing
 
 class NN():
@@ -14,12 +14,14 @@ class NN():
     '''
     def __init__(self):
         self.model  = Sequential()
+        Path.mkdir('./logs', parents=True, exist_ok=True)
+        self.tb_callback = tensorflow.keras.callbacks.TensorBoard('./logs', update_freq=1)
     def summary(self):
         self.model.summary()
     def optim(self,lr=1e-3):
-        return keras.optimizers.Adam(learning_rate=lr)
+        return tensorflow.keras.optimizers.Adam(learning_rate=lr)
     def loss(self):
-       return keras.losses.MeanSquaredError() 
+       return tensorflow.keras.losses.MeanSquaredError() 
     def build_network(self, input_shape, lstm=True):
         self.model.add(Input(shape=input_shape))
         if lstm:
@@ -40,7 +42,7 @@ class NN():
             loss=self.loss()
         )
     def train(self,x,y, e = 50, bs = 32, vs = 0.2):
-        self.model.fit(x,y,epochs = e, batch_size = bs, validation_split=vs)
+        self.model.fit(x,y,epochs = e, batch_size = bs, validation_split=vs, callbacks=[self.tb_callback])
 
     def save(self):
         model_json = self.model.to_json()

@@ -54,6 +54,9 @@ y_train = np.array(y_train, dtype=np.float32)
 x_train = np.reshape(x_train, (x_train.shape[0]*x_train.shape[1], x_train.shape[2]))
 y_train = np.reshape(y_train, (y_train.shape[0]*y_train.shape[1], y_train.shape[2]))
 
+# Save npy on disk
+np.save('./data/x_train.npy')
+np.save('./data/y_train.npy')
 
 s_x = MinMaxScaler()
 s_y = MinMaxScaler()
@@ -73,7 +76,7 @@ model.build_network(x_train.shape[1:])
 model.compile()
 model.summary()
 model.save()
-model.train(x_train, y_train, e=50)
+model.train(x_train, y_train, e=1)
 
 
 
